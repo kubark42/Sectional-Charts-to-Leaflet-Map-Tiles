@@ -11,6 +11,7 @@ from datetime import datetime as dt
 FAA_VFR_CHARTS_URL = 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/vfr/'
 MIN_ZOOM = 0
 MAX_ZOOM = 2
+RESAMPLING = 'antialias'
 
 current_directory = os.path.dirname(__file__)
 base_directory = os.path.abspath(os.path.join(current_directory, '..'))
