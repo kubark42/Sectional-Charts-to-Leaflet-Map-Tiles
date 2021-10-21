@@ -206,6 +206,7 @@ def crop_charts():
 					' -q' + \
 					' -cutline ' + os.path.join(clipping_shapes_directory, 'Western_Aleutian_Islands_East.shp') + \
 					' -crop_to_cutline' + \
+					' -cblend 10' +                  \
 					' -of GTiff' + \
 					' ' + os.path.join(colored_charts_directory, filename) + \
 					' ' + os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_East.tif')
@@ -217,6 +218,7 @@ def crop_charts():
 					' -q' + \
 					' -cutline ' + os.path.join(clipping_shapes_directory, 'Western_Aleutian_Islands_West.shp') + \
 					' -crop_to_cutline' + \
+					' -cblend 10' +                  \
 					' -of GTiff' + \
 					' ' + os.path.join(colored_charts_directory, filename) + \
 					' ' + os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_West.tif')
@@ -229,6 +231,7 @@ def crop_charts():
 					' -q' + \
 					' -cutline ' + os.path.join(clipping_shapes_directory, os.path.splitext(filename)[0] + '.shp') + \
 					' -crop_to_cutline' + \
+					' -cblend 10' +                  \
 					' -of GTiff' + \
 					' ' + os.path.join(colored_charts_directory, filename) + \
 					' ' + os.path.join(cropped_charts_directory, 'tmp.tif')
@@ -257,7 +260,13 @@ def warp_charts():
 			run_command(
 				'gdalwarp' + \
 				' -r lanczos' + \
-				' -t_srs EPSG:4326' + \
+				' -overwrite' +                \
+				' -multi' +                   \
+				' -wo NUM_THREADS=ALL_CPUS' +   \
+				' -t_srs EPSG:3857' + \
+				' -wm 1024' +                    \
+				' --config GDAL_CACHEMAX 1024' + \
+				' -co TILED=YES' +              \
 				' ' + os.path.join(cropped_charts_directory, filename) + \
 				' ' + os.path.join(warped_charts_directory, 'tmp.tif')
 			)
