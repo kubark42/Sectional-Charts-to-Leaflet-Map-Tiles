@@ -31,11 +31,14 @@ vrt_file = os.path.join(tmp_directory, 'merged_sectionals.vrt')
 
 def run_command(command, print_output=False):
 	if print_output:
-			proc = subprocess.Popen(command, shell=True)
+		proc = subprocess.Popen(command, shell=True)
 	else:
 		proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	
-	proc.communicate()
+	out, err = proc.communicate()
+
+	if err:
+		print("err: '{}'".format(err))
 
 
 def create_directories():
