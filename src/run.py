@@ -112,7 +112,11 @@ def unzip_archive(archive_path, mapType):
 	new_files = [i for i in list(os.listdir(raw_charts_directory)) if i not in previous_list]
 
 	for filename in new_files:
-		if filename.endswith('.tif'):
+		if filename.endswith('.tif') \
+		   and not "FLY" in filename \
+		   and (not "Planning" in filename or mapType == "planning")\
+		   and not "Graphic" in filename:
+			tif_name = filename.replace(" ", "_")
 			os.rename(
 				os.path.join(raw_charts_directory, filename),
 				os.path.join(raw_charts_directory, tif_name)
