@@ -29,7 +29,7 @@ cropped_charts_directory = os.path.join(tmp_directory, '03_cropped/')
 warped_charts_directory = os.path.join(tmp_directory, '04_warped/')
 intermediate_tiles_directory = os.path.join(tmp_directory, '05_intermediate_tiles')
 sectional_version_index_file = os.path.join(tmp_directory, 'version_index')
-vrt_file = os.path.join(tmp_directory, 'merged_sectionals.vrt')
+vrt_file = os.path.join(tmp_directory, 'merged_maps.vrt')
 
 
 def run_command(command, print_output=False):
@@ -130,7 +130,10 @@ def download_charts(mapType):
 	web_content = str(web_response.read())
 
 	# Find all the sectionals
-	matches = findall(r'="?(https?\:\/\/aeronav\.faa\.gov\/visual\/(\d{2}-\d{2}-\d{4})\/sectional-files\/([a-zA-Z_\-]+)\.zip)"?>', web_content)
+	if mapType == "sectional" or mapType == "tac":
+		matches = findall(r'="?(https?\:\/\/aeronav\.faa\.gov\/visual\/(\d{2}-\d{2}-\d{4})\/' + mapType + '-files\/([a-zA-Z_\-]+)\.zip)"?>', web_content)
+	elif mapType == "planning":
+		matches = findall(r'="?(https?\:\/\/aeronav\.faa\.gov\/visual\/(\d{2}-\d{2}-\d{4})\/Planning\/([a-zA-Z_\-]+)\.zip)"?>', web_content)
 
 	# Iterate over the matches
 	for url, version, location in matches:
@@ -224,7 +227,11 @@ def crop_charts(mapType):
 
 	for filename in os.listdir(colored_charts_directory):
 		if filename.endswith('.tif'):
-			if 'Western_Aleutian_Islands' in filename:
+			if 'U.S._VFR_Wall_Planning_Chart' in filename:
+			# Handle the Western Aleutian Islands a little differently because they cross the +-180 longitude line
+				crop_chart(mapType, filename, 'U_S_VFR_Wall_Planning_Chart.shp')
+				print('    Cropped ' + os.path.splitext(filename)[0])
+			elif 'Western_Aleutian_Islands' in filename:
 				if not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_East.tif')) and not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_West.tif')):
 					crop_chart(mapType, filename, 'Western_Aleutian_Islands_East.shp')
 					print('    Cropped Western_Aleutian_Islands_East')
@@ -324,8 +331,17 @@ if __name__ == "__main__":
 
 	parser.add_argument('--no_download', dest='shouldDownload', action='store_false', help='Flag to turn off downloading of new files')
 	parser.add_argument('--sectional', dest='sectional', action='store_true', help='Process the FAA VFR sectionals')
+	parser.add_argument('--tac', dest='tac', action='store_true', help='Process the FAA TAC maps')
+	parser.add_argument('--planning', dest='planning', action='store_true', help='Process the FAA Planning map')
 
 	args = parser.parse_args()
 
 	if args.sectional:
 		main(mapType = "sectional", shouldDownload = args.shouldDownload)
+
+	if args.tac:
+		main(mapType = "tac", shouldDownload = args.shouldDownload)
+
+	if args.planning:
+		MAX_ZOOM = 6
+		main(mapType = "planning", shouldDownload = args.shouldDownload)
