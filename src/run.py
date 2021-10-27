@@ -166,10 +166,10 @@ def download_charts(mapType):
 		print("Download: " + sectional_info['location'] + ", Version date: " + sectional_info['version'])
 
 		# Remove TIFF files in processing directories. This is a fundamental part in the  mechanism to resume procssing after a halted run.
-		run_command('rm -f ' + os.path.join(raw_charts_directory, sectional_info['location'] + '.tif'))
-		run_command('rm -f ' + os.path.join(colored_charts_directory, sectional_info['location'] + '.tif'))
-		run_command('rm -f ' + os.path.join(cropped_charts_directory, sectional_info['location'] + '.tif'))
-		run_command('rm -f ' + os.path.join(warped_charts_directory, sectional_info['location'] + '.tif'))
+		silentremove(os.path.join(raw_charts_directory, sectional_info['location'] + '.tif'))
+		silentremove(os.path.join(colored_charts_directory, sectional_info['location'] + '.tif'))
+		silentremove(os.path.join(cropped_charts_directory, sectional_info['location'] + '.tif'))
+		silentremove(os.path.join(warped_charts_directory, sectional_info['location'] + '.tif'))
 
 		# Download the individual chart
 		download_chart(sectional_info)
@@ -279,9 +279,6 @@ def warp_charts():
 
 def create_leaflet_map_tiles(mapType):
 	print('Creating map tiles...')
-
-	# Remove any old map tiles
-	run_command('rm -rf ' + os.path.join(intermediate_tiles_directory, '*'))
 
 	# Create VRT file
 	silentremove(vrt_file)
