@@ -4,5 +4,6 @@
 /tiles/*
 !/tiles/example.html
 
-# MacOS thumbnail file
+# MacOS helper files
 .DS_Store
+._*
