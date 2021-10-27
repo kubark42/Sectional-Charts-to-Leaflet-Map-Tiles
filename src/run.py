@@ -199,6 +199,23 @@ def expand_colors():
 
 			print('    Expanded colors for ' + os.path.splitext(filename)[0])
 
+def crop_chart(mapType, filename, crop_shapefile):
+	run_command(
+		'gdalwarp' + \
+		' -dstnodata 0' + \
+		' -q' + \
+		' -cutline ' + os.path.join(clipping_shapes_directory, mapType, crop_shapefile) + \
+		' -crop_to_cutline' + \
+		' -cblend 10' +                  \
+		' -of GTiff' + \
+		' ' + os.path.join(colored_charts_directory, filename) + \
+		' ' + os.path.join(cropped_charts_directory, 'tmp.tif')
+	)
+
+	# Move the temp file to its final location
+	os.rename(os.path.join(cropped_charts_directory, 'tmp.tif'), os.path.join(cropped_charts_directory, filename))
+
+
 def crop_charts(mapType):
 	print('Cropping charts to remove legend and border...')
 
@@ -207,52 +224,14 @@ def crop_charts(mapType):
 
 	for filename in os.listdir(colored_charts_directory):
 		if filename.endswith('.tif'):
-			# Handle the Western Aleutian Islands a little differently because they cross the +-180 longitude line
-			if 'Western_Aleutian_Islands' in filename and not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_East.tif')) and not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_West.tif')):
-				run_command(
-					'gdalwarp' + \
-					' -dstnodata 0' + \
-					' -q' + \
-					' -cutline ' + os.path.join(clipping_shapes_directory, "sectional", 'Western_Aleutian_Islands_East.shp') + \
-					' -crop_to_cutline' + \
-					' -cblend 10' +                  \
-					' -of GTiff' + \
-					' ' + os.path.join(colored_charts_directory, filename) + \
-					' ' + os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_East.tif')
-				)
-				print('    Cropped Western_Aleutian_Islands_East')
-				run_command(
-					'gdalwarp' + \
-					' -dstnodata 0' + \
-					' -q' + \
-					' -cutline ' + os.path.join(clipping_shapes_directory, 'Western_Aleutian_Islands_West.shp') + \
-					' -crop_to_cutline' + \
-					' -cblend 10' +                  \
-					' -of GTiff' + \
-					' ' + os.path.join(colored_charts_directory, filename) + \
-					' ' + os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_West.tif')
-				)
-				print('    Cropped Western_Aleutian_Islands_West')
-			elif 'Western_Aleutian_Islands' not in filename and not os.path.exists(os.path.join(cropped_charts_directory, filename)):
-				run_command(
-					'gdalwarp' + \
-					' -dstnodata 0' + \
-					' -q' + \
-					' -cutline ' + os.path.join(clipping_shapes_directory, map, os.path.splitext(filename)[0] + '.shp') + \
-					' -crop_to_cutline' + \
-					' -cblend 10' +                  \
-					' -of GTiff' + \
-					' ' + os.path.join(colored_charts_directory, filename) + \
-					' ' + os.path.join(cropped_charts_directory, 'tmp.tif')
-				)
-
-				# Move the temp file to its final location
-				run_command(
-					'mv ' + \
-					' ' + os.path.join(cropped_charts_directory, 'tmp.tif') + \
-					' ' + os.path.join(cropped_charts_directory, filename)
-				)
-
+			if 'Western_Aleutian_Islands' in filename:
+				if not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_East.tif')) and not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_West.tif')):
+					crop_chart(mapType, filename, 'Western_Aleutian_Islands_East.shp')
+					print('    Cropped Western_Aleutian_Islands_East')
+					crop_chart(mapType, filename, 'Western_Aleutian_Islands_West.shp')
+					print('    Cropped Western_Aleutian_Islands_West')
+			elif not os.path.exists(os.path.join(cropped_charts_directory, filename)):
+				crop_chart(mapType, filename, os.path.splitext(filename)[0] + '.shp')
 				print('    Cropped ' + os.path.splitext(filename)[0])
 
 
