@@ -152,7 +152,7 @@ def download_charts(mapType):
 
 		# Only add to the queue if it's not already downloaded OR if the online file is more recent
 		if sectional_info['location'] + '.tif' not in os.listdir(raw_charts_directory) or \
-		            local_version_date < online_version_date:
+					local_version_date < online_version_date:
 			for item in download_queue:
 				if item['location'] == sectional_info['location'] and item['version'] < sectional_info['version']:
 					item['url'] = sectional_info['url']
