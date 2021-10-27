@@ -3,6 +3,7 @@
 import os
 import shelve
 import subprocess
+import argparse
 from re import findall
 from zipfile import ZipFile
 from urllib.request import urlopen, HTTPError, URLError
@@ -89,7 +90,7 @@ def download_chart(sectional_info):
 		print('URL Error:' + e.reason + sectional_info['url'])
 
 
-def unzip_archive(archive_path, tif_name):
+def unzip_archive(archive_path):
 	previous_list = os.listdir(raw_charts_directory)
 	
 	if archive_path.endswith('.zip'):
@@ -160,7 +161,7 @@ def download_sectional_charts():
 		set_local_sectional_version(sectional_info['location'], sectional_info['version'])
 
 		# Unzip the sectional and delete the original zip file
-		unzip_archive(os.path.join(raw_charts_directory, sectional_info['location'] + '.zip'), sectional_info['location'] + '.tif')
+		unzip_archive(os.path.join(raw_charts_directory, sectional_info['location'] + '.zip'))
 
 
 def expand_colors():
@@ -191,7 +192,7 @@ def expand_colors():
 
 			print('    Expanded colors for ' + os.path.splitext(filename)[0])
 
-def crop_charts():
+def crop_charts(map):
 	print('Cropping charts to remove legend and border...')
 
       # Remove any tmp files which might already be present
@@ -208,7 +209,7 @@ def crop_charts():
 					'gdalwarp' + \
 					' -dstnodata 0' + \
 					' -q' + \
-					' -cutline ' + os.path.join(clipping_shapes_directory, 'Western_Aleutian_Islands_East.shp') + \
+					' -cutline ' + os.path.join(clipping_shapes_directory, "sectional", 'Western_Aleutian_Islands_East.shp') + \
 					' -crop_to_cutline' + \
 					' -cblend 10' +                  \
 					' -of GTiff' + \
@@ -233,7 +234,7 @@ def crop_charts():
 					'gdalwarp' + \
 					' -dstnodata 0' + \
 					' -q' + \
-					' -cutline ' + os.path.join(clipping_shapes_directory, os.path.splitext(filename)[0] + '.shp') + \
+					' -cutline ' + os.path.join(clipping_shapes_directory, map, os.path.splitext(filename)[0] + '.shp') + \
 					' -crop_to_cutline' + \
 					' -cblend 10' +                  \
 					' -of GTiff' + \
@@ -285,7 +286,7 @@ def warp_charts():
 			print('    Warped ' + os.path.splitext(filename)[0])
 
 
-def create_leaflet_map_tiles():
+def create_leaflet_map_tiles(map):
 	print('Creating map tiles...')
 
 	# Remove any old map tiles
@@ -322,14 +323,33 @@ def create_leaflet_map_tiles():
 		)
 
 
-def main():
+def main(map, shouldDownload):
 	create_directories()
-	download_sectional_charts()
+
+	# Check if we should redownload files
+	if shouldDownload == True:
+		if map == "sectional":
+			download_sectional_charts()
+	# This is a required step before running gdal2tiles
 	expand_colors()
-	crop_charts()
+
+	# Crop the charts
+	crop_charts(map)
+
+	# Warp the charts to a web mercator projection
 	warp_charts()
-	create_leaflet_map_tiles()
+
+	# Tile the map
+	create_leaflet_map_tiles(map)
 	
 
 if __name__ == "__main__":
-   main()
+	parser = argparse.ArgumentParser(description='Download FAA maps and turn them into quadtiles.')
+
+	parser.add_argument('--no_download', dest='shouldDownload', action='store_false', help='Flag to turn off downloading of new files')
+	parser.add_argument('--sectional', dest='sectional', action='store_true', help='Process the FAA VFR sectionals')
+
+	args = parser.parse_args()
+
+	if args.sectional:
+		main(map = "sectional", shouldDownload = args.shouldDownload)
