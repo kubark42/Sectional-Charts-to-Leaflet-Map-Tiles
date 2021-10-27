@@ -313,6 +313,7 @@ def main(mapType, shouldDownload):
 	# Check if we should redownload files
 	if shouldDownload == True:
 		download_charts(mapType)
+
 	# This is a required step before running gdal2tiles
 	expand_colors()
 
