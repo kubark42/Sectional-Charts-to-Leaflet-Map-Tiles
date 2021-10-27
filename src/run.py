@@ -19,18 +19,19 @@ RESAMPLING = 'antialias'
 current_directory = os.path.dirname(__file__)
 base_directory = os.path.abspath(os.path.join(current_directory, '..'))
 tiles_directory = os.path.join(base_directory, 'tiles/')
-tmp_directory = os.path.join(base_directory, 'tmp/')
 assets_directory = os.path.join(base_directory, 'assets/')
 clipping_shapes_directory = os.path.join(assets_directory, 'clipping_shapes/')
 tilers_tools_directory = os.path.join(current_directory, 'tilers_tools')
-raw_charts_directory = os.path.join(tmp_directory, '01_raw/')
-colored_charts_directory = os.path.join(tmp_directory, '02_rgba/')
-cropped_charts_directory = os.path.join(tmp_directory, '03_cropped/')
-warped_charts_directory = os.path.join(tmp_directory, '04_warped/')
-intermediate_tiles_directory = os.path.join(tmp_directory, '05_intermediate_tiles')
-sectional_version_index_file = os.path.join(tmp_directory, 'version_index')
-vrt_file = os.path.join(tmp_directory, 'merged_maps.vrt')
 
+# These directories will be set later, as a function of which map type is being processed
+tmp_directory = -1
+raw_charts_directory = -1
+colored_charts_directory = -1
+cropped_charts_directory = -1
+warped_charts_directory = -1
+intermediate_tiles_directory = -1
+sectional_version_index_file = -1
+vrt_file = -1
 
 def run_command(command, print_output=False):
 	if print_output:
@@ -52,7 +53,19 @@ def silentremove(filename):
 		if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
 			raise # re-raise exception if a different error occurred
 
-def create_directories():
+def create_directories(map_type):
+	global tmp_directory, raw_charts_directory, colored_charts_directory, cropped_charts_directory, \
+	    warped_charts_directory, intermediate_tiles_directory, sectional_version_index_file, vrt_file
+
+	tmp_directory = os.path.join(base_directory, 'tmp', map_type)
+	raw_charts_directory = os.path.join(tmp_directory, '01_raw/')
+	colored_charts_directory = os.path.join(tmp_directory, '02_rgba/')
+	cropped_charts_directory = os.path.join(tmp_directory, '03_cropped/')
+	warped_charts_directory = os.path.join(tmp_directory, '04_warped/')
+	intermediate_tiles_directory = os.path.join(tmp_directory, '05_intermediate_tiles')
+	sectional_version_index_file = os.path.join(tmp_directory, 'version_index')
+	vrt_file = os.path.join(tmp_directory, 'merged_maps.vrt')
+
 	if not os.path.exists(tiles_directory):
 		os.makedirs(tiles_directory)
 
@@ -128,10 +141,18 @@ def unzip_archive(archive_path, mapType):
 
 
 def download_charts(mapType):
-	print('Downloading new/updated sectional charts...')
+	print('Downloading new/updated ' + mapType + ' charts...')
 	download_queue = list()
 	web_response = urlopen(FAA_VFR_CHARTS_URL)
 	web_content = str(web_response.read())
+
+	map_type_suffix = ""
+
+	if mapType == "sectional":
+		map_type_suffix = "_SEC"
+	elif mapType == "tac":
+		map_type_suffix = "_TAC"
+
 
 	# Find all the sectionals
 	if mapType == "sectional" or mapType == "tac":
@@ -151,7 +172,7 @@ def download_charts(mapType):
 		local_version_date = dt.strptime(get_local_sectional_version(sectional_info['location']), "%m-%d-%Y")
 
 		# Only add to the queue if it's not already downloaded OR if the online file is more recent
-		if sectional_info['location'] + '.tif' not in os.listdir(raw_charts_directory) or \
+		if sectional_info['location'] + map_type_suffix + '.tif' not in os.listdir(raw_charts_directory) or \
 					local_version_date < online_version_date:
 			for item in download_queue:
 				if item['location'] == sectional_info['location'] and item['version'] < sectional_info['version']:
@@ -308,7 +329,7 @@ def create_leaflet_map_tiles(mapType):
 
 
 def main(mapType, shouldDownload):
-	create_directories()
+	create_directories(mapType)
 
 	# Check if we should redownload files
 	if shouldDownload == True:
