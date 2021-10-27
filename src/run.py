@@ -90,7 +90,7 @@ def download_chart(sectional_info):
 		print('URL Error:' + e.reason + sectional_info['url'])
 
 
-def unzip_archive(archive_path):
+def unzip_archive(archive_path, mapType):
 	previous_list = os.listdir(raw_charts_directory)
 	
 	if archive_path.endswith('.zip'):
@@ -113,7 +113,7 @@ def unzip_archive(archive_path):
 			)
 
 
-def download_sectional_charts():
+def download_charts(mapType):
 	print('Downloading new/updated sectional charts...')
 	download_queue = list()
 	web_response = urlopen(FAA_VFR_CHARTS_URL)
@@ -161,7 +161,7 @@ def download_sectional_charts():
 		set_local_sectional_version(sectional_info['location'], sectional_info['version'])
 
 		# Unzip the sectional and delete the original zip file
-		unzip_archive(os.path.join(raw_charts_directory, sectional_info['location'] + '.zip'))
+		unzip_archive(os.path.join(raw_charts_directory, sectional_info['location'] + '.zip'), mapType)
 
 
 def expand_colors():
@@ -192,7 +192,7 @@ def expand_colors():
 
 			print('    Expanded colors for ' + os.path.splitext(filename)[0])
 
-def crop_charts(map):
+def crop_charts(mapType):
 	print('Cropping charts to remove legend and border...')
 
       # Remove any tmp files which might already be present
@@ -286,7 +286,7 @@ def warp_charts():
 			print('    Warped ' + os.path.splitext(filename)[0])
 
 
-def create_leaflet_map_tiles(map):
+def create_leaflet_map_tiles(mapType):
 	print('Creating map tiles...')
 
 	# Remove any old map tiles
@@ -323,25 +323,24 @@ def create_leaflet_map_tiles(map):
 		)
 
 
-def main(map, shouldDownload):
+def main(mapType, shouldDownload):
 	create_directories()
 
 	# Check if we should redownload files
 	if shouldDownload == True:
-		if map == "sectional":
-			download_sectional_charts()
+		download_charts(mapType)
 	# This is a required step before running gdal2tiles
 	expand_colors()
 
 	# Crop the charts
-	crop_charts(map)
+	crop_charts(mapType)
 
 	# Warp the charts to a web mercator projection
 	warp_charts()
 
 	# Tile the map
-	create_leaflet_map_tiles(map)
-	
+	create_leaflet_map_tiles(mapType)
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Download FAA maps and turn them into quadtiles.')
@@ -352,4 +351,4 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	if args.sectional:
-		main(map = "sectional", shouldDownload = args.shouldDownload)
+		main(mapType = "sectional", shouldDownload = args.shouldDownload)
