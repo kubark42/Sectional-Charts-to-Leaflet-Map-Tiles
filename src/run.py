@@ -257,10 +257,10 @@ def crop_charts(mapType):
 				crop_chart(mapType, filename, 'U_S_VFR_Wall_Planning_Chart.shp')
 				print('    Cropped ' + os.path.splitext(filename)[0])
 			elif 'Western_Aleutian_Islands' in filename:
-				if not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_East.tif')) and not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_West.tif')):
-					crop_chart(mapType, filename, 'Western_Aleutian_Islands_East.shp')
+				if not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_East_SEC.tif')) and not os.path.exists(os.path.join(cropped_charts_directory, 'Western_Aleutian_Islands_West_SEC.tif')):
+					crop_chart(mapType, filename, 'Western_Aleutian_Islands_East_SEC.shp')
 					print('    Cropped Western_Aleutian_Islands_East')
-					crop_chart(mapType, filename, 'Western_Aleutian_Islands_West.shp')
+					crop_chart(mapType, filename, 'Western_Aleutian_Islands_West_SEC.shp')
 					print('    Cropped Western_Aleutian_Islands_West')
 			elif not os.path.exists(os.path.join(cropped_charts_directory, filename)):
 				crop_chart(mapType, filename, os.path.splitext(filename)[0] + '.shp')
