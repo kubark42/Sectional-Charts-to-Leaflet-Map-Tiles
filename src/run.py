@@ -288,7 +288,6 @@ def create_leaflet_map_tiles(mapType):
 	)
 
 	# Create map tiles
-      # Create map tiles
 	run_command(
 		'gdal2tiles.py ' + \
 		' --profile=mercator' + \
