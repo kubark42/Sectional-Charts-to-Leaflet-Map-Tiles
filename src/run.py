@@ -297,7 +297,7 @@ def create_leaflet_map_tiles(mapType):
 		' --xyz' + \
 		' --zoom=' + str(MIN_ZOOM)  + '-' + str(MAX_ZOOM) + \
 		' ' + vrt_file + \
-            ' ' + intermediate_tiles_directory, True
+		' ' + intermediate_tiles_directory, True
 	)
 
 	# Remove any old map tiles
