@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 import os
+import errno
+import shutil
 import shelve
 import subprocess
 import argparse
@@ -41,6 +43,14 @@ def run_command(command, print_output=False):
 	if err:
 		print("err: '{}'".format(err))
 
+# Silly function so that os.remove() doesn't spam the console when there is no file to be removed
+# C.f. https://stackoverflow.com/a/10840586
+def silentremove(filename):
+	try:
+		os.remove(filename)
+	except OSError as e: # this would be "except OSError, e:" before Python 2.6
+		if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
+			raise # re-raise exception if a different error occurred
 
 def create_directories():
 	if not os.path.exists(tiles_directory):
@@ -168,10 +178,7 @@ def expand_colors():
 	print('Expanding chart colors to RGBA...')
 
 	# Remove any tmp files which might already be present
-	run_command(
-		'rm ' + \
-		' ' + os.path.join(colored_charts_directory, 'tmp.tif')
-	)
+	silentremove(os.path.join(colored_charts_directory, 'tmp.tif'))
 
 	for filename in os.listdir(raw_charts_directory):
 		if filename.endswith('.tif') and not os.path.exists(os.path.join(colored_charts_directory, filename)):
@@ -195,11 +202,8 @@ def expand_colors():
 def crop_charts(mapType):
 	print('Cropping charts to remove legend and border...')
 
-      # Remove any tmp files which might already be present
-	run_command(
-		'rm ' + \
-		' ' + os.path.join(cropped_charts_directory, 'tmp.tif')
-	)
+	# Remove any tmp files which might already be present
+	silentremove(os.path.join(cropped_charts_directory, 'tmp.tif'))
 
 	for filename in os.listdir(colored_charts_directory):
 		if filename.endswith('.tif'):
@@ -254,10 +258,7 @@ def crop_charts(mapType):
 
 def warp_charts():
 	# Remove any tmp files which might already be present
-	run_command(
-		'rm ' + \
-		' ' + os.path.join(warped_charts_directory, 'tmp.tif')
-	)
+	silentremove(os.path.join(warped_charts_directory, 'tmp.tif'))
 
 	print('Warping charts...')
 	for filename in os.listdir(cropped_charts_directory):
@@ -290,11 +291,10 @@ def create_leaflet_map_tiles(mapType):
 	print('Creating map tiles...')
 
 	# Remove any old map tiles
-	run_command('rm -rf ' + os.path.join(tiles_directory, '!(example.html)'))
 	run_command('rm -rf ' + os.path.join(intermediate_tiles_directory, '*'))
 
 	# Create VRT file
-	run_command('rm -f ' + vrt_file)
+	silentremove(vrt_file)
 	run_command(
 		'gdalbuildvrt' + \
 		' ' + vrt_file + \
@@ -314,13 +314,11 @@ def create_leaflet_map_tiles(mapType):
             ' ' + intermediate_tiles_directory, True
 	)
 
+	# Remove any old map tiles
+	shutil.rmtree(os.path.join(tiles_directory, mapType), ignore_errors=True)
+
 	# Move created map tiles to tiles directory
-	for zoom_level in range(MIN_ZOOM, MAX_ZOOM + 1):
-		run_command(
-			'cp -R' + \
-			' ' + os.path.join(intermediate_tiles_directory, os.path.splitext(os.path.basename(vrt_file))[0] + '.tms/' + str(zoom_level)) + \
-			' ' + tiles_directory
-		)
+	os.rename(intermediate_tiles_directory, os.path.join(tiles_directory, mapType))
 
 
 def main(mapType, shouldDownload):
