@@ -151,7 +151,7 @@ def download_charts(mapType):
 	if mapType == "sectional":
 		map_type_suffix = "_SEC"
 	elif mapType == "tac":
-		map_type_suffix = "_TAC"
+		map_type_suffix = ""
 
 
 	# Find all the sectionals
