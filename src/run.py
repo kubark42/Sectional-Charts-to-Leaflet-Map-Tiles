@@ -101,16 +101,16 @@ def set_local_sectional_version(location, version):
 		shelf[location] = version
 
 
-def download_chart(sectional_info):
+def download_chart(chart_info):
 	try:
-		with open(os.path.join(raw_charts_directory, sectional_info['location'] + '.zip'), 'wb') as zip_file:
-			web_response = urlopen(sectional_info['url'])
+		with open(os.path.join(raw_charts_directory, chart_info['location'] + '.zip'), 'wb') as zip_file:
+			web_response = urlopen(chart_info['url'])
 			zip_file.write(web_response.read())
 
 	except HTTPError as e:
-		print('HTTP Error:' + e.code + sectional_info['url'])
+		print('HTTP Error:' + e.code + chart_info['url'])
 	except URLError as e:
-		print('URL Error:' + e.reason + sectional_info['url'])
+		print('URL Error:' + e.reason + chart_info['url'])
 
 
 def unzip_archive(archive_path, mapType):
@@ -162,44 +162,44 @@ def download_charts(mapType):
 
 	# Iterate over the matches
 	for url, version, location in matches:
-		sectional_info = {
+		chart_info = {
 			'url': str(url),
 			'location': str(location),
 			'version': str(version)
 		}
 
-		online_version_date = dt.strptime(sectional_info['version'], "%m-%d-%Y")
-		local_version_date = dt.strptime(get_local_sectional_version(sectional_info['location']), "%m-%d-%Y")
+		online_version_date = dt.strptime(chart_info['version'], "%m-%d-%Y")
+		local_version_date = dt.strptime(get_local_sectional_version(chart_info['location']), "%m-%d-%Y")
 
 		# Only add to the queue if it's not already downloaded OR if the online file is more recent
-		if sectional_info['location'] + map_type_suffix + '.tif' not in os.listdir(raw_charts_directory) or \
+		if chart_info['location'] + map_type_suffix + '.tif' not in os.listdir(raw_charts_directory) or \
 					local_version_date < online_version_date:
 			for item in download_queue:
-				if item['location'] == sectional_info['location'] and item['version'] < sectional_info['version']:
-					item['url'] = sectional_info['url']
-					item['version'] = sectional_info['version']
+				if item['location'] == chart_info['location'] and item['version'] < chart_info['version']:
+					item['url'] = chart_info['url']
+					item['version'] = chart_info['version']
 					break
 			else:
-				download_queue.append(sectional_info)
+				download_queue.append(chart_info)
 
 	# Iterate over each item in the download queue. The files in this queue are only the ones which are newer or simply missing
-	for sectional_info in download_queue:
-		print("Download: " + sectional_info['location'] + ", Version date: " + sectional_info['version'])
+	for chart_info in download_queue:
+		print("Download: " + chart_info['location'] + ", Version date: " + chart_info['version'])
 
 		# Remove TIFF files in processing directories. This is a fundamental part in the  mechanism to resume procssing after a halted run.
-		silentremove(os.path.join(raw_charts_directory, sectional_info['location'] + '.tif'))
-		silentremove(os.path.join(colored_charts_directory, sectional_info['location'] + '.tif'))
-		silentremove(os.path.join(cropped_charts_directory, sectional_info['location'] + '.tif'))
-		silentremove(os.path.join(warped_charts_directory, sectional_info['location'] + '.tif'))
+		silentremove(os.path.join(raw_charts_directory, chart_info['location'] + '.tif'))
+		silentremove(os.path.join(colored_charts_directory, chart_info['location'] + '.tif'))
+		silentremove(os.path.join(cropped_charts_directory, chart_info['location'] + '.tif'))
+		silentremove(os.path.join(warped_charts_directory, chart_info['location'] + '.tif'))
 
 		# Download the individual chart
-		download_chart(sectional_info)
+		download_chart(chart_info)
 
 		# Write the sectional information to the index file
-		set_local_sectional_version(sectional_info['location'], sectional_info['version'])
+		set_local_sectional_version(chart_info['location'], chart_info['version'])
 
 		# Unzip the sectional and delete the original zip file
-		unzip_archive(os.path.join(raw_charts_directory, sectional_info['location'] + '.zip'), mapType)
+		unzip_archive(os.path.join(raw_charts_directory, chart_info['location'] + '.zip'), mapType)
 
 
 def expand_colors():
